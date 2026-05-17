@@ -22,6 +22,7 @@ const zh = {
     newPassword: '新的密码',
     confirmPassword: '确认密码',
     add: '添加',
+    random: '随机',
     manage: '管理',
     rename: '改名',
     delete: '删除',

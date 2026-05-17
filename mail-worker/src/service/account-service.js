@@ -13,7 +13,93 @@ import roleService from './role-service';
 import { t } from '../i18n/i18n';
 import verifyRecordService from './verify-record-service';
 
+const RANDOM_NAME_PREFIXES = [
+	'alex', 'alice', 'amy', 'anna', 'ben', 'brian', 'carol', 'chris', 'claire', 'david',
+	'emily', 'emma', 'eric', 'frank', 'grace', 'harry', 'helen', 'jack', 'james', 'jane',
+	'jason', 'john', 'kevin', 'laura', 'lily', 'linda', 'lucy', 'mark', 'mary', 'mike',
+	'nancy', 'oliver', 'paul', 'peter', 'rose', 'sam', 'sarah', 'tom', 'tony', 'victor',
+	'aaron', 'adam', 'adrian', 'alan', 'andrew', 'angela', 'arthur', 'ashley', 'barbara', 'betty',
+	'brenda', 'bruce', 'calvin', 'carl', 'catherine', 'charles', 'charlie', 'daniel', 'diana', 'donna',
+	'dorothy', 'edward', 'edwin', 'elaine', 'elizabeth', 'ella', 'eugene', 'felix', 'george', 'hannah',
+	'henry', 'irene', 'isaac', 'janet', 'jeff', 'jerry', 'jessica', 'joan', 'joyce', 'judy',
+	'julie', 'justin', 'karen', 'katherine', 'kelly', 'kenneth', 'larry', 'leon', 'lisa', 'louis',
+	'margaret', 'maria', 'martha', 'martin', 'matthew', 'megan', 'melissa', 'michael', 'monica', 'nathan',
+	'nicole', 'patrick', 'philip', 'rachel', 'ralph', 'raymond', 'rebecca', 'richard', 'robert', 'roger',
+	'ruth', 'scott', 'steven', 'susan', 'terry', 'theresa', 'timothy', 'walter', 'wayne', 'william'
+];
+
 const accountService = {
+
+	async randomPrefix(c, params, userId) {
+
+		const { minEmailPrefix, emailPrefixFilter, domainList } = await settingService.query(c);
+		let { suffix } = params;
+
+		if (!suffix) {
+			throw new BizError(t('notExistDomain'));
+		}
+
+		const emailSuffix = suffix.startsWith('@') ? suffix : `@${suffix}`;
+
+		if (!domainList.includes(emailSuffix)) {
+			throw new BizError(t('notExistDomain'));
+		}
+
+		const userRow = await userService.selectById(c, userId);
+		const roleRow = await roleService.selectById(c, userRow.type);
+		const roleCheckEmail = `${RANDOM_NAME_PREFIXES[0]}${emailSuffix}`;
+
+		if (userRow.email !== c.env.admin && !roleService.hasAvailDomainPerm(roleRow.availDomain, roleCheckEmail)) {
+			throw new BizError(t('noDomainPermAdd'),403)
+		}
+
+		const names = RANDOM_NAME_PREFIXES
+			.map(prefix => prefix.toLowerCase())
+			.filter(prefix => !emailPrefixFilter.some(content => prefix.includes(content)));
+		const plainNames = names.filter(prefix => prefix.length >= minEmailPrefix);
+		const numberedNames = names.filter(prefix => prefix.length + 2 >= minEmailPrefix);
+
+		if (plainNames.length === 0 && numberedNames.length === 0) {
+			throw new BizError(t('randomEmailPrefixFail'));
+		}
+
+		for (const prefix of this.shuffle([...plainNames])) {
+			const accountRow = await this.selectByEmailIncludeDel(c, `${prefix}${emailSuffix}`);
+			if (!accountRow) {
+				return { prefix };
+			}
+		}
+
+		const numbers = this.shuffle(Array.from({ length: 99 }, (_, index) => index + 1));
+		for (const name of this.shuffle([...numberedNames])) {
+			for (const number of numbers) {
+				const prefix = `${name}${number}`;
+
+				if (prefix.length < minEmailPrefix) {
+					continue;
+				}
+
+				if (emailPrefixFilter.some(content => prefix.includes(content))) {
+					continue;
+				}
+
+				const accountRow = await this.selectByEmailIncludeDel(c, `${prefix}${emailSuffix}`);
+				if (!accountRow) {
+					return { prefix };
+				}
+			}
+		}
+
+		throw new BizError(t('randomEmailPrefixFail'));
+	},
+
+	shuffle(list) {
+		for (let i = list.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[list[i], list[j]] = [list[j], list[i]];
+		}
+		return list;
+	},
 
 	async add(c, params, userId) {
 

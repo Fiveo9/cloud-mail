@@ -8,6 +8,11 @@ app.get('/account/list', async (c) => {
 	return c.json(result.ok(list));
 });
 
+app.get('/account/randomPrefix', async (c) => {
+	const data = await accountService.randomPrefix(c, c.req.query(), userContext.getUserId(c));
+	return c.json(result.ok(data));
+});
+
 app.delete('/account/delete', async (c) => {
 	await accountService.delete(c, c.req.query(), userContext.getUserId(c));
 	return c.json(result.ok());

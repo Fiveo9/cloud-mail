@@ -100,6 +100,9 @@
             </div>
           </template>
         </el-input>
+        <el-button class="random-btn" @click="randomPrefix" :loading="randomLoading">
+          {{ $t('random') }}
+        </el-button>
         <el-button class="btn" type="primary" @click="submit" :loading="addLoading"
         >{{ $t('add') }}
         </el-button>
@@ -131,6 +134,7 @@ import {computed, nextTick, reactive, ref, watch} from "vue";
 import {
   accountList,
   accountAdd,
+  accountRandomPrefix,
   accountDelete,
   accountSetName,
   accountSetAllReceive,
@@ -153,6 +157,7 @@ const settingStore = useSettingStore();
 const emailStore = useEmailStore();
 const showAdd = ref(false)
 const addLoading = ref(false);
+const randomLoading = ref(false);
 const domainList = computed(() => settingStore.domainList)
 const accounts = reactive([])
 const noLoading = ref(false)
@@ -424,6 +429,30 @@ function getAccountList() {
   })
 }
 
+function randomPrefix() {
+  if (randomLoading.value) {
+    return
+  }
+
+  addForm.suffix = addForm.suffix || settingStore.domainList[0]
+
+  if (!addForm.suffix) {
+    ElMessage({
+      message: t('notEmailMsg'),
+      type: 'error',
+      plain: true
+    })
+    return
+  }
+
+  randomLoading.value = true
+  accountRandomPrefix(addForm.suffix).then(({prefix}) => {
+    addForm.email = prefix
+    nextTick(() => addRef.value.focus())
+  }).finally(() => {
+    randomLoading.value = false
+  })
+}
 
 function submit() {
 
@@ -575,6 +604,15 @@ path[fill="#ffdda1"] {
   .btn {
     width: 100%;
     margin-top: 15px;
+  }
+
+  .random-btn {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .random-btn + .btn {
+    margin-left: 0;
   }
 
   .item {

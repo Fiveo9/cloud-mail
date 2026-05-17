@@ -65,6 +65,7 @@ const en = {
 	publicTokenFail: 'Token validation failed',
 	notAdmin: 'The entered email is not an administrator email',
 	emailExistDatabase: 'Email already exists in the database',
+	randomEmailPrefixFail: 'Unable to generate an available email prefix. Please try again later',
 	notConfigOss: 'Object storage not configured',
 	perms: {
 		"邮件": "Emails",

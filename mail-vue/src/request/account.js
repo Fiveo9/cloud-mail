@@ -8,6 +8,10 @@ export function accountAdd(email,token) {
     return http.post('/account/add', {email,token})
 }
 
+export function accountRandomPrefix(suffix) {
+    return http.get('/account/randomPrefix', {params: {suffix}})
+}
+
 export function accountSetName(accountId,name) {
     return http.put('/account/setName', {name,accountId})
 }

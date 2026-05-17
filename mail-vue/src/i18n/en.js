@@ -22,6 +22,7 @@ const en = {
     newPassword: 'New password',
     confirmPassword: 'Confirm password',
     add: 'Add',
+    random: 'Random',
     manage: 'Manage',
     rename: 'Rename',
     delete: 'Delete',
